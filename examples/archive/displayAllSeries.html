@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<meta charset="UTF-8">
+		<title>Display all DICOM Series of a ZIP Archive with the CornerstoneArchiveImageLoader</title>
+        <meta name="apple-mobile-web-app-capable" content="yes" >
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="user-scalable=yes, width = device-width, initial-scale = 1, maximum-scale=1">
+		<link rel="shortcut icon" href="https://www.radiologic.fr/favicon.ico">
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/jszip.min.js"></script>
+		<script type="text/javascript" src="js/cornerstone.min.js"></script> 
+		<script type="text/javascript" src="js/cornerstoneDicomParserUTF8.min.js"></script>
+		<script type="text/javascript" src="js/cornerstoneMath.min.js"></script>
+		<script type="text/javascript" src="js/cornerstoneTools.min.js"></script>
+		<script type="text/javascript" src="../../dist/cornerstoneArchiveImageLoader.js"></script> 
+		<style>
+		#activity {width:46px; height:46px; display: none}
+		.dicomPanel {width:480px; height:320px; border:1px solid silver;}
+        </style>
+        <script>
+		'use strict';
+		var firstLoad = true;
+
+		  // Initialize the web worker manager
+		
+			var config = {
+				maxWebWorkers: navigator.hardwareConcurrency || 1,
+				startWebWorkersOnDemand: true,
+				webWorkerPath : '../../dist/cornerstoneArchiveImageLoaderWebWorker.min.js',
+				taskConfiguration: {
+					'decodeTask' : {
+						loadCodecsOnStartup : true,
+						initializeCodecsOnStartup: false,
+						codecsPath: '../dist/cornerstoneArchiveImageLoaderCodecs.min.js',
+						usePDFJS: false
+					}
+				}
+			};  // end config
+			cornerstoneArchiveImageLoader.webWorkerManager.initialize(config);
+			
+			var seriesCount = 0;
+			var firstInstances = [];
+			var start = {};
+			var stacks = []; // array of each series stack
+			
+			function selectFile(files) {
+			  if (firstLoad) {
+			    firstLoad = false;
+			  } else {
+				reset();
+			  } // end if else firstlaod
+			  start = new Date().getTime();
+			  document.getElementById('activity').style.display = "block";
+			  var element = document.getElementById('content');
+			  element.innerHTML = '';
+			  document.getElementById('timeInfo').innerHTML = '';
+			  cornerstoneArchiveImageLoader.archive.archiveLoader(files[0]).then(function (result) {
+				cornerstoneArchiveImageLoader.archive.processDICOMDIR().then(function (seriesArrays) {
+				  for (var i = 0; i < seriesArrays.length; i++) {
+				    var imageIds = [];
+				    var stack = {  // series stack
+			          currentImageIdIndex: 0,
+			          imageIds: imageIds
+			        };  // end stack
+				    for (var j = 0; j < seriesArrays[i].length; j++) {
+					  stack.imageIds.push('ziparchive:' + seriesArrays[i][j]);
+					}  // end for j
+					stacks.push(stack);
+				  } // end for i
+				  document.getElementById('content').style.display = "block";
+     			  showInstances();
+				}).catch(function (err) {
+			      console.log('Dicom Processing Error : ' + err);
+				  alert('Dicom Processing Error : ' + err);
+				}); // end then catch seriesArrays
+              }).catch(function (err) {
+                console.log('Loading and Unzipping File Error : ' + err);
+				alert('Loading and Unzipping File Error : ' + err);
+			  });  // end then catch result
+			}  // end function selectFile(file)
+			
+			function showInstances() {
+			  var results = document.getElementById('content');
+			  seriesCount = stacks.length;
+			  for (var k=0; k < seriesCount; k++) {
+				var instanceCount = stacks[k].imageIds.length;
+			    var title = document.createElement('h3');
+				var text = document.createTextNode('Series: ' + (k + 1) + ' - Instances: ' + instanceCount); 
+				title.appendChild(text);
+				results.appendChild(title);
+				var panel = document.createElement('div');
+				panel.classList.add('dicomPanel');
+				panel.setAttribute("id", "elem" + k); 
+				results.appendChild(panel);
+
+				(function (Panel) {
+				    cornerstone.loadAndCacheImage(stacks[k].imageIds[0]).then(function(image) {
+			        cornerstone.enable(Panel);
+				    cornerstone.displayImage(Panel, image);
+					firstInstances.push('dummy');
+					seriesCallback();
+				  }, function (err) {
+				    console.log('Image Loading Error: ' + err);
+				    alert('Image Loading Error: ' + err);
+			      }); // end loadImage
+				})(panel);
+
+			  } // end for k
+			  document.getElementById('activity').style.display = 'none';
+			} // end function showInstances()
+			
+			var seriesCallback = function () {
+			  for (var i = 0; i < seriesCount; i++) {
+			    if (!firstInstances[i]) return;
+              } // end for i
+			  // the first instances of all images have been displayed
+			  var end = new Date().getTime();
+			  var time = end - start;
+			  document.getElementById('timeInfo').innerHTML = 'Total time to unzip and decode the first instance of each DICOM series: ' + time + ' milliseconds';
+			  document.getElementById('activity').style.display = 'none';
+                for (var j = 0; j < stacks.length; j++) {
+				  var element = document.getElementById('elem' + j);
+				  cornerstoneTools.scrollIndicator.enable(element);
+				  cornerstoneTools.wwwc.activate(element, 1);
+				  cornerstoneTools.addStackStateManager(element, ['stack', 'playClip']);
+				  cornerstoneTools.addToolState(element, 'stack', stacks[j]);
+				  var frameRate = 10;
+				  cornerstoneTools.playClip(element, frameRate); 
+				} // end for j	  
+            }; // end seriesCallback
+			function showCacheInfo () {
+			  var cacheInfo = cornerstone.imageCache.getCacheInfo();
+			  document.getElementById('cacheInfo').innerHTML = cacheInfo.numberOfImagesCached;
+			} // end function showCacheInfo()
+			
+			function clearCache () {
+			  cornerstone.imageCache.purgeCache();
+			} // end function clearCache()
+			
+			function clearContent () {
+			  document.getElementById('content').innerHTML = '';
+			  document.getElementById('timeInfo').innerHTML = '';
+			} // end function clearContent
+			
+			function stopClip () {
+			  for (var j = 0; j < stacks.length; j++) {
+			    var element = document.getElementById('elem' + j);
+				cornerstoneTools.stopClip(element);
+			  } // end for j
+			} // end function stopClip()
+			
+			function reset () {
+			  for (var j = 0; j < stacks.length; j++) {
+			    var element = document.getElementById('elem' + j);
+				cornerstoneTools.stopClip(element);
+				cornerstone.disable(element);
+			  } // end for j
+			  clearCache();
+			  firstInstances = [];
+			  stacks = [];
+			  clearContent();
+			} // end function reset
+
+        </script>
+    </head>
+    <body>
+        <h2>Display all DICOM Series of a ZIP Archive with the CornerstoneArchiveImageLoader</h2> 
+		<input type="file" id="select-file" onchange="selectFile(this.files)" />
+		<input type='button' onclick='showCacheInfo()' value='Cache Info' />
+		<div id='cacheInfo'></div>
+		<div id='activity'><img src='activity.gif' alt='activity' /></div>
+		<div id='timeInfo'></div>
+		<div id='content'></div>
+    </body>
+</html>

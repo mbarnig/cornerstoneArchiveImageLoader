@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<meta charset="UTF-8">
+		<title>Process DICOMDIR File of a ZIP Archive</title>
+        <meta name="apple-mobile-web-app-capable" content="yes" >
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="user-scalable=yes, width = device-width, initial-scale = 1, maximum-scale=1">
+		<link rel="shortcut icon" href="https://www.radiologic.fr/favicon.ico">
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/jszip.min.js"></script>
+		<script type="text/javascript" src="js/cornerstone.min.js"></script> 
+		<script type="text/javascript" src="js/cornerstoneDicomParserUTF8.min.js"></script>
+		<script type="text/javascript" src="../../dist/cornerstoneArchiveImageLoader.js"></script> 
+		<style>
+        </style>
+        <script>
+			var seriesArrays = [];
+			
+			function selectFile (files) {
+				var start = new Date().getTime();
+				cornerstoneArchiveImageLoader.archive.archiveLoader(files[0]).then(function (result) {
+					cornerstoneArchiveImageLoader.archive.processDICOMDIR().then(function (seriesArrays) {
+                      var output = showInstancesList(seriesArrays);
+					  document.getElementById("dicomdirContent").innerHTML = output;
+					  var end = new Date().getTime();
+					  var time = end - start;
+					  document.getElementById('info').innerHTML = 'Total Time : ' + time + ' milliseconds';
+					}).catch(function (err) {
+					  console.log('Dicom Processing Error : ' + err);
+					  alert('Dicom Processing Error : ' + err);
+					}); // end then catch result
+				}).catch(function(err) {
+					console.log('Reading File Error : ' + err);
+					alert('Reading File Error : ' + err);
+				}); // end then catch seriesArrays
+			}  // end function selectFile(file)
+			
+			function showInstancesList (seriesArrays) {
+			  var output = '<h2>Ordered DICOM Instances List</h2>';
+			  for (var j=0; j < seriesArrays.length; j++) {
+				output += '<h4>Series ' + (j + 1) + '</h4><ul>';
+			    for (var k=0; k < seriesArrays[j].length; k++) {
+				  var folderAndFile = seriesArrays[j][k];
+				  output += '<li>' + folderAndFile + '</li>';
+				} // end for k
+				output += '</ul>';
+			  } // end for j
+			
+			  return output;
+			} // end function showInstanceList
+				
+        </script>
+    </head>
+    <body>
+        <h2>Process DICOMDIR File of a ZIP Archive</h2> 
+		<input type="file" id="select-file" onchange="selectFile(this.files)" />
+		<div id="info"></div>
+		<div id="dicomdirContent"></div>
+    </body>
+</html>

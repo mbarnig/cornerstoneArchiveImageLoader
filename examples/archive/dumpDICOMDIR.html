@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<meta charset="UTF-8">
+		<title>Dump DICOMDIR File of a ZIP Archive</title>
+        <meta name="apple-mobile-web-app-capable" content="yes" >
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="viewport" content="user-scalable=yes, width = device-width, initial-scale = 1, maximum-scale=1">
+		<link rel="shortcut icon" href="https://www.radiologic.fr/favicon.ico">
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/jszip.min.js"></script>
+		<script type="text/javascript" src="js/cornerstone.min.js"></script> 
+		<script type="text/javascript" src="js/cornerstoneDicomParserUTF8.min.js"></script>
+		<script type="text/javascript" src="../../dist/cornerstoneArchiveImageLoader.js"></script> 
+		<style>
+        </style>
+        <script>
+			function selectFile(files) {
+				var start = new Date().getTime();
+				cornerstoneArchiveImageLoader.archive.archiveLoader(files[0]).then(function(result) {
+					cornerstoneArchiveImageLoader.archive.dumpDICOMDIR().then(function(output) {
+                      var element = document.getElementById('dicomdirContent');
+                      element.innerHTML = output;
+					  var end = new Date().getTime();
+					  var time = end - start;
+					  document.getElementById("timeInfo").innerHTML = "Total time to unzip and dump DICOM archive : " + time + " milliseconds";
+					}).catch(function (err) {
+					  console.log('Dumping Error : ' + err);
+					  alert('Dumping Error : ' + err);
+					}); // end catch
+                })  // end then result
+				.catch(function (err) {
+					console.log('Reading File Error : ' + err);
+					alert('Reading File Error : ' + err);
+				});
+			}  // end function selectFile(file)
+
+        </script>
+    </head>
+    <body>
+        <h2>DUMP DICOMDIR File of a ZIP Archive</h2> 
+		<input type="file" id="select-file" onchange="selectFile(this.files)" />
+		<div id="timeInfo"></div>
+		<div id="dicomdirContent"></div>
+    </body>
+</html>
