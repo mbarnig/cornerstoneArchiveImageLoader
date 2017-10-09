@@ -147,3 +147,4 @@ As DICOM parser, my enhanced [cornerstoneDicomParserUTF8](https://github.com/mba
 
 ### Links
 * cornerstone user forum: [DICOMDIR support](https://groups.google.com/forum/#!searchin/cornerstone-platform/diego$20angulo%7Csort:relevance/cornerstone-platform/nEgWSzUbxCg/OomV8J07AgAJ)
+* cornerstone user forum: [ImageLoader for zipped DICOMDIR archives](https://groups.google.com/forum/#!topic/cornerstone-platform/ytSbP8WVBFs)
