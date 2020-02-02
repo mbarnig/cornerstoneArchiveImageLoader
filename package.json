@@ -85,7 +85,7 @@
   "dependencies": {
     "cornerstone-core": "^0.12.2",
     "cornerstone-dicom-parser-utf8": "^1.7.53",
-    "jquery": "^2.2.4",
+    "jquery": "^4.4.0",
     "jszip": "^3.1.3"
   }
 }
