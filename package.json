@@ -23,7 +23,7 @@
   "module": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chafey/cornerstoneArchiveImageLoader.git"
+    "url": "https://github.com/mbarnig/cornerstoneArchiveImageLoader.git"
   },
   "scripts": {
     "eslint": "eslint -c .eslintrc.js src",
