@@ -68,7 +68,7 @@
     "eslint-loader": "^1.7.1",
     "istanbul-instrumenter-loader": "^2.0.0",
     "jsdoc": "^3.4.3",
-    "karma": "^1.6.0",
+    "karma": "^6.3.14",
     "karma-chrome-launcher": "^2.0.0",
     "karma-coverage": "^1.1.1",
     "karma-firefox-launcher": "^1.0.1",
